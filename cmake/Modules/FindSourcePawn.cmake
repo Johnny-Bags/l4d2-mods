@@ -1,0 +1,30 @@
+# SOURCEPAWN_FOUND
+# SOURCEPAWN_EXECUTABLE
+# SOURCEPAWN_VERSION_STRING
+
+include(FindPackageHandleStandardArgs)
+
+find_program(SOURCEPAWN_EXECUTABLE spcomp DOC "SourcePawn compiler executable")
+
+if(SOURCEPAWN_EXECUTABLE)
+	set(SPCOMP_VERSION_REGEX "^SourcePawn Compiler ([0-9\.]+)")
+
+	execute_process(COMMAND ${SOURCEPAWN_EXECUTABLE}
+		OUTPUT_VARIABLE spcomp_output
+		ERROR_QUIET
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+	
+	if (spcomp_output MATCHES ${SPCOMP_VERSION_REGEX})
+		string(REGEX MATCH ${SPCOMP_VERSION_REGEX} SOURCEPAWN_VERSION_STRING ${spcomp_output})
+		set(SOURCEPAWN_VERSION_STRING ${CMAKE_MATCH_1})
+		unset(spcomp_output)
+	endif()
+endif()
+
+mark_as_advanced(SOURCEPAWN_EXECUTABLE)
+find_package_handle_standard_args(
+	SourcePawn
+	REQUIRED_VARS SOURCEPAWN_EXECUTABLE
+	VERSION_VAR SOURCEPAWN_VERSION_STRING
+)
