@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(bezerker LANGUAGES NONE)
+project(berserker LANGUAGES NONE)
 
 # cmake modules
 list(APPEND CMAKE_MODULE_PATH
@@ -10,7 +10,7 @@ include(SourcePawn)
 
 # source files
 list(APPEND SRC
-	${CMAKE_CURRENT_SOURCE_DIR}/bezerker.sp
+	${CMAKE_CURRENT_SOURCE_DIR}/berserker.sp
 )
 
 # include dirs
