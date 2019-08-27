@@ -7,26 +7,26 @@
 #pragma semicolon 1
 
 /*
- * The bezerker has more rage the lower their health is.
+ * The berserker has more rage the lower their health is.
  *
- * Rage makes the bezerker:
+ * Rage makes the berserker:
  *	- Move faster
  *  - Swing their weapon faster
  *	- Do more damage
  *  - Take less damage
  * 
- * The bezerker can also double-jump.
+ * The berserker can also double-jump.
  * 
- * The bezerker is not allowed to use primary weapons.
+ * The berserker is not allowed to use primary weapons.
  *
  * usage:
- *	type !bezerker in chat to become the bezerker.
+ *	type !berserker in chat to become the berserker.
  */
 public Plugin myinfo =
 {
-	name = "Bezerker",
+	name = "Berserker",
 	author = "Johnny Bags",
-	description = "Add bezerker survivor class.",
+	description = "Add berserker survivor class.",
 	version = "1.0",
 	url = "http://www.sourcemod.net/"
 };
@@ -37,7 +37,7 @@ static const float MAX_SPEED = 2.0;
 static const float MIN_GRAVITY = 0.5;
 static const float MAX_GRAVITY = 1.0;
 static const int MAX_DOUBLE_JUMPS = 1;
-static int g_bezerkerClient;
+static int g_berserkerClient;
 
 int g_lastButtons[MAXPLAYERS + 1];
 int	g_lastFlags[MAXPLAYERS + 1];
@@ -58,7 +58,7 @@ void HookEvents()
 
 void RegConsoleCmds()
 {
-	RegConsoleCmd("bezerker", cmd_ToggleBezerker, "Become the bezerker or stop being the bezerker.");
+	RegConsoleCmd("berserker", cmd_ToggleBerserker, "Become the berserker or stop being the berserker.");
 }
 
 /******************************************************************************
@@ -66,7 +66,7 @@ void RegConsoleCmds()
  ******************************************************************************/
 public void OnPluginStart()
 {
-	g_bezerkerClient = -1;
+	g_berserkerClient = -1;
 	
 	HookEvents();
 	RegConsoleCmds();
@@ -74,7 +74,7 @@ public void OnPluginStart()
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon)
 {
-	if (PlayerIsBezerker(client))
+	if (PlayerIsBerserker(client))
 	{
 		DoubleJump(client);
 		WeaponSpeed(client, buttons);
@@ -93,14 +93,14 @@ public void OnClientDisconnect(int client)
 
 public Action OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
 {
-	if (PlayerIsBezerker(attacker))
+	if (PlayerIsBerserker(attacker))
 	{
 		damage *= 1.0 + (CalculateBezerkAmount(attacker) * 3.0);
 		
 		return Plugin_Changed;
 	}
 	
-	if (PlayerIsBezerker(victim) && !J_IsPlayerIncapacitated(victim))
+	if (PlayerIsBerserker(victim) && !J_IsPlayerIncapacitated(victim))
 	{
 		damage *= 1.0 - (CalculateBezerkAmount(victim) * 0.75);
 		
@@ -114,21 +114,21 @@ public Action OnTakeDamage(int victim, int &attacker, int &inflictor, float &dam
  * queries
  ******************************************************************************/
 /*
- * is there a bezerker active on the server?
+ * is there a berserker active on the server?
  */
-bool BezerkerExists()
+bool BerserkerExists()
 {
-	if (g_bezerkerClient < 0) return false;
+	if (g_berserkerClient < 0) return false;
 	
-	return J_PlayerIsHumanSurvivor(g_bezerkerClient);
+	return J_PlayerIsHumanSurvivor(g_berserkerClient);
 }
 
 /*
- * is this client the bezerker?
+ * is this client the berserker?
  */
-bool PlayerIsBezerker(int client)
+bool PlayerIsBerserker(int client)
 {
-	return client == g_bezerkerClient && J_PlayerIsHumanSurvivor(client);
+	return client == g_berserkerClient && J_PlayerIsHumanSurvivor(client);
 }
 
 /******************************************************************************
@@ -158,33 +158,33 @@ void WeaponSpeed(int client, int & buttons)
 }
 
 /*
- * remove a client's bezerker status and inform everybody
+ * remove a client's berserker status and inform everybody
  */
-void StopBeingBezerker(int client)
+void StopBeingBerserker(int client)
 {
-	g_bezerkerClient = -1;
+	g_berserkerClient = -1;
 	
-	PrintYouAreNoLongerBezerker(client);
+	PrintYouAreNoLongerBerserker(client);
 }
 
 /*
- * make this client a bezerker if a bezerker does not already exist
+ * make this client a berserker if a berserker does not already exist
  */
-void BecomeBezerker(int client)
+void BecomeBerserker(int client)
 {
-	if (BezerkerExists())
+	if (BerserkerExists())
 	{
-		PrintAlreadyHaveBezerker();
+		PrintAlreadyHaveBerserker();
 		
 		return;
 	}
 	
-	g_bezerkerClient = client;
+	g_berserkerClient = client;
 	
 	J_GivePlayerMachete(client);
 	J_DisarmPrimary(client);
 	
-	PrintYouAreNowBezerker(client);
+	PrintYouAreNowBerserker(client);
 }
 
 void SetPlayerSpeedBoost(int client, float v)
@@ -268,7 +268,7 @@ public Action event_DefibUsed(Event event, const char[] name, bool dontBroadcast
 {
 	int client = GetClientOfUserId(event.GetInt("subject"));
 	
-	if (PlayerIsBezerker(client))
+	if (PlayerIsBerserker(client))
 	{
 		GoBezerk(client);
 	}
@@ -278,7 +278,7 @@ public Action event_HealSuccess(Event event, const char[] name, bool dontBroadca
 {
 	int client = GetClientOfUserId(event.GetInt("subject"));
 	
-	if (PlayerIsBezerker(client))
+	if (PlayerIsBerserker(client))
 	{
 		GoBezerk(client);
 	}
@@ -290,7 +290,7 @@ public Action event_ItemPickup(Event event, const char[] name, bool dontBroadcas
 {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	
-	if (PlayerIsBezerker(client))
+	if (PlayerIsBerserker(client))
 	{
 		J_DisarmPrimary(client);
 		
@@ -304,7 +304,7 @@ public Action event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	
-	if (PlayerIsBezerker(client))
+	if (PlayerIsBerserker(client))
 	{
 		GoBezerk(client);
 	}
@@ -316,7 +316,7 @@ public Action event_PlayerHurt(Event event, const char[] name, bool dontBroadcas
 {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	
-	if (PlayerIsBezerker(client) && !J_IsPlayerIncapacitated(client))
+	if (PlayerIsBerserker(client) && !J_IsPlayerIncapacitated(client))
 	{
 		GoBezerk(client);
 	}
@@ -328,7 +328,7 @@ public Action event_PlayerIncapacitated(Event event, const char[] name, bool don
 {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	
-	if (PlayerIsBezerker(client))
+	if (PlayerIsBerserker(client))
 	{
 		SetPlayerSpeedBoost(client, 0.0);
 	}
@@ -340,7 +340,7 @@ public Action event_ReviveSuccess(Event event, const char[] name, bool dontBroad
 {
 	int client = GetClientOfUserId(event.GetInt("subject"));
 	
-	if (PlayerIsBezerker(client))
+	if (PlayerIsBerserker(client))
 	{
 		GoBezerk(client);
 	}
@@ -352,7 +352,7 @@ public Action event_PlayerSpawn(Handle event, const char[] name, bool dontBroadc
 {
 	int client = GetClientOfUserId(GetEventInt(event, "userid"));
 	
-	if (PlayerIsBezerker(client))
+	if (PlayerIsBerserker(client))
 	{
 		J_GivePlayerMachete(client);
 		GoBezerk(client);
@@ -365,7 +365,7 @@ public Action event_SurvivorRescued(Event event, const char[] name, bool dontBro
 {
 	int client = GetClientOfUserId(GetEventInt(event, "subject"));
 	
-	if (PlayerIsBezerker(client))
+	if (PlayerIsBerserker(client))
 	{
 		GoBezerk(client);
 	}
@@ -376,41 +376,41 @@ public Action event_SurvivorRescued(Event event, const char[] name, bool dontBro
 /******************************************************************************
  * messages
  ******************************************************************************/
-void PrintAlreadyHaveBezerker()
+void PrintAlreadyHaveBerserker()
 {
 	char bezerkerName[32];
 	
-	GetClientName(g_bezerkerClient, bezerkerName, sizeof(bezerkerName));
+	GetClientName(g_berserkerClient, bezerkerName, sizeof(bezerkerName));
 	
-	PrintToChatAll("Our current bezerker is %s.", bezerkerName);
+	PrintToChatAll("Our current berserker is %s.", bezerkerName);
 }
 
-void PrintYouAreNoLongerBezerker(int client)
+void PrintYouAreNoLongerBerserker(int client)
 {
 	char clientName[32];
 	
 	GetClientName(client, clientName, sizeof(clientName));
 	
-	ReplyToCommand(client, "You are no longer bezerker.");
+	ReplyToCommand(client, "You are no longer berserker.");
 	
 	char msg[128];
 	
-	Format(msg, sizeof(msg), "%s is no longer bezerker.", clientName);
+	Format(msg, sizeof(msg), "%s is no longer berserker.", clientName);
 	
 	J_PrintToEveryoneElse(client, msg);
 }
 
-void PrintYouAreNowBezerker(int client)
+void PrintYouAreNowBerserker(int client)
 {
 	char clientName[32];
 	
 	GetClientName(client, clientName, sizeof(clientName));
 	
-	ReplyToCommand(client, "You are now bezerker.");
+	ReplyToCommand(client, "You are now berserker.");
 	
 	char msg[128];
 	
-	Format(msg, sizeof(msg), "%s is now bezerker.", clientName);
+	Format(msg, sizeof(msg), "%s is now berserker.", clientName);
 	
 	J_PrintToEveryoneElse(client, msg);
 }
@@ -418,17 +418,17 @@ void PrintYouAreNowBezerker(int client)
 /******************************************************************************
  * commands
  ******************************************************************************/
-public Action cmd_ToggleBezerker(int client, int args)
+public Action cmd_ToggleBerserker(int client, int args)
 {
 	if (!J_PlayerIsHumanSurvivor(client)) return Plugin_Continue;
 	
-	if (g_bezerkerClient == client)
+	if (g_berserkerClient == client)
 	{
-		StopBeingBezerker(client);
+		StopBeingBerserker(client);
 	}
 	else
 	{
-		BecomeBezerker(client);
+		BecomeBerserker(client);
 	}
 	
 	return Plugin_Handled;
