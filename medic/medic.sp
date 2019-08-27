@@ -5,6 +5,17 @@
 
 #pragma semicolon 1
 
+/*
+ * The medic can heal other survivors by standing near to them, and constantly
+ * regenerates health.
+ *
+ * The medic periodically receives pain pills, adrenaline and first-aid kits.
+ *
+ * The medic is not allowed to use primary weapons.
+ *
+ * Usage:
+ *	type !medic in chat to become the medic.
+ */
 public Plugin myinfo =
 {
 	name = "Medic",

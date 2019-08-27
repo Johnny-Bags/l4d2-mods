@@ -1,10 +1,27 @@
 #include <sourcemod>
+#include <sdkhooks>
 #include <sdktools>
 #include <johnny/messages.sp>
 #include <johnny/players.sp>
 
 #pragma semicolon 1
 
+/*
+ * The bezerker has more rage the lower their health is.
+ *
+ * Rage makes the bezerker:
+ *	- Move faster
+ *  - Swing their weapon faster
+ *	- Do more damage
+ *  - Take less damage
+ * 
+ * The bezerker can also double-jump.
+ * 
+ * The bezerker is not allowed to use primary weapons.
+ *
+ * usage:
+ *	type !bezerker in chat to become the bezerker.
+ */
 public Plugin myinfo =
 {
 	name = "Bezerker",
@@ -16,7 +33,8 @@ public Plugin myinfo =
 
 static const float MIN_SPEED = 1.0;
 static const float MAX_SPEED = 3.0;
-static const float MIN_GRAVITY = 0.5;
+static const float HOBBLE_SPEED = 8.0;
+static const float MIN_GRAVITY = 0.4;
 static const float MAX_GRAVITY = 1.0;
 static const int MAX_DOUBLE_JUMPS = 1;
 static int g_bezerkerClient;
@@ -31,7 +49,9 @@ void HookEvents()
 	HookEvent("item_pickup", event_ItemPickup);
 	HookEvent("player_death", event_PlayerDeath);
 	HookEvent("player_hurt", event_PlayerHurt);
+	HookEvent("player_incapacitated", event_PlayerIncapacitated);
 	HookEvent("player_spawn", event_PlayerSpawn);
+	HookEvent("revive_success", event_ReviveSuccess);
 	HookEvent("survivor_rescued", event_SurvivorRescued);
 	HookEvent("defibrillator_used", event_DefibUsed);
 }
@@ -59,6 +79,35 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		DoubleJump(client);
 		WeaponSpeed(client, buttons);
 	}
+}
+
+public void OnClientPutInServer(int client)
+{
+	SDKHook(client, SDKHook_OnTakeDamage, OnTakeDamage);
+}
+
+public void OnClientDisconnect(int client)
+{
+	SDKUnhook(client, SDKHook_OnTakeDamage, OnTakeDamage);
+}
+
+public Action OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
+{
+	if (PlayerIsBezerker(attacker))
+	{
+		damage *= 1.0 + (CalculateBezerkAmount(attacker) * 3.0);
+		
+		return Plugin_Changed;
+	}
+	
+	if (PlayerIsBezerker(victim) && !J_IsPlayerIncapacitated(victim))
+	{
+		damage *= 1.0 - (CalculateBezerkAmount(victim) * 0.75);
+		
+		return Plugin_Changed;
+	}
+	
+	return Plugin_Continue;
 }
 
 /******************************************************************************
@@ -102,7 +151,7 @@ void WeaponSpeed(int client, int & buttons)
 		
 		float bezerkAmount = CalculateBezerkAmount(client);
 		
-		SetEntPropFloat(ent, Prop_Send, "m_flPlaybackRate", bezerkAmount);
+		SetEntPropFloat(ent, Prop_Send, "m_flPlaybackRate", bezerkAmount + 1.0);
 		SetEntPropFloat(ent, Prop_Send, "m_flNextPrimaryAttack", m_flNextPrimaryAttack - (bezerkAmount / 2));
 		SetEntPropFloat(ent, Prop_Send, "m_flNextSecondaryAttack", m_flNextSecondaryAttack - (bezerkAmount / 2));
 	}
@@ -140,11 +189,10 @@ void BecomeBezerker(int client)
 
 void SetPlayerSpeedBoost(int client, float v)
 {
-	if (v < 0.0) v = 0.0;
-	if (v > 1.0) v = 1.0;
-	
 	float speed = MIN_SPEED + (v * (MAX_SPEED - MIN_SPEED));
 	float gravity = MAX_GRAVITY + (v * (MIN_GRAVITY - MAX_GRAVITY));
+	
+	if (v >= 1.0) speed = HOBBLE_SPEED;
 	
 	SetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue", speed);
 	SetEntityGravity(client, gravity);
@@ -268,6 +316,30 @@ public Action event_PlayerHurt(Event event, const char[] name, bool dontBroadcas
 {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	
+	if (PlayerIsBezerker(client) && !J_IsPlayerIncapacitated(client))
+	{
+		GoBezerk(client);
+	}
+	
+	return Plugin_Continue;
+}
+
+public Action event_PlayerIncapacitated(Event event, const char[] name, bool dontBroadcast)
+{
+	int client = GetClientOfUserId(event.GetInt("userid"));
+	
+	if (PlayerIsBezerker(client))
+	{
+		SetPlayerSpeedBoost(client, 0.0);
+	}
+	
+	return Plugin_Continue;
+}
+
+public Action event_ReviveSuccess(Event event, const char[] name, bool dontBroadcast)
+{
+	int client = GetClientOfUserId(event.GetInt("subject"));
+	
 	if (PlayerIsBezerker(client))
 	{
 		GoBezerk(client);
@@ -282,6 +354,7 @@ public Action event_PlayerSpawn(Handle event, const char[] name, bool dontBroadc
 	
 	if (PlayerIsBezerker(client))
 	{
+		J_GivePlayerMachete(client);
 		GoBezerk(client);
 	}
 	
