@@ -33,7 +33,6 @@ public Plugin myinfo =
 
 static const float MIN_SPEED = 1.0;
 static const float MAX_SPEED = 2.0;
-//static const float HOBBLE_SPEED = 8.0;
 static const float MIN_GRAVITY = 0.5;
 static const float MAX_GRAVITY = 1.0;
 static const int MAX_DOUBLE_JUMPS = 1;
@@ -192,8 +191,6 @@ void SetPlayerSpeedBoost(int client, float v)
 	float speed = MIN_SPEED + (v * (MAX_SPEED - MIN_SPEED));
 	float gravity = MAX_GRAVITY + (v * (MIN_GRAVITY - MAX_GRAVITY));
 	
-	//if (v >= 1.0) speed = HOBBLE_SPEED;
-	
 	SetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue", speed);
 	SetEntityGravity(client, gravity);
 }
@@ -202,7 +199,7 @@ float CalculateBezerkAmount(int client)
 {
 	int health = GetClientHealth(client);
 	
-	return Pow(1.0 - (float(health) / 100.0), 2.0);
+	return Pow(1.0 - (float(health) / 100.0), 2.0) * 0.5;
 }
 
 void GoBezerk(int client)
