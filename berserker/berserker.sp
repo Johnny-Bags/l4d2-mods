@@ -94,7 +94,7 @@ public Action OnTakeDamage(int victim, int &attacker, int &inflictor, float &dam
 {
 	if (PlayerIsBerserker(attacker))
 	{
-		damage *= 1.0 + (CalculateBezerkAmount(attacker) * 3.0);
+		damage *= 1.0 + (CalculateBezerkAmount(attacker) * 2.0);
 		
 		return Plugin_Changed;
 	}
