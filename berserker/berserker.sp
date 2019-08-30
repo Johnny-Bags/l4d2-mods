@@ -199,7 +199,7 @@ float CalculateBezerkAmount(int client)
 {
 	int health = GetClientHealth(client);
 	
-	return Pow(1.0 - (float(health) / 100.0), 2.0) * 0.5;
+	return Pow(1.0 - (float(health) / 100.0), 2.0) * 0.75;
 }
 
 void GoBezerk(int client)
