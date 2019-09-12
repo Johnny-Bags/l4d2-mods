@@ -48,6 +48,8 @@ void RegConsoleCmds()
 void HookEvents()
 {
 	HookEvent("item_pickup", event_ItemPickup);
+	HookEvent("player_spawn", event_PlayerSpawn);
+	HookEvent("survivor_rescued", event_SurvivorRescued);
 }
 
 void OnHealDistanceChanged(Handle convar, const char[] oldValue, const char[] newValue)
@@ -280,6 +282,32 @@ public Action event_ItemPickup(Event event, const char[] name, bool dontBroadcas
 	
 	return Plugin_Continue;
 }
+
+public Action event_PlayerSpawn(Handle event, const char[] name, bool dontBroadcast)
+{
+	int client = GetClientOfUserId(GetEventInt(event, "userid"));
+	
+	if (client == g_medicClient)
+	{
+		J_GivePlayerMachete(client);
+		J_DisarmPrimary(client);
+	}
+	
+	return Plugin_Continue;
+}
+
+public Action event_SurvivorRescued(Event event, const char[] name, bool dontBroadcast)
+{
+	int client = GetClientOfUserId(GetEventInt(event, "subject"));
+	
+	if (client == g_medicClient)
+	{
+		J_GivePlayerMachete(client);
+		J_DisarmPrimary(client);
+	}
+	
+	return Plugin_Continue;
+} 
 
 /******************************************************************************
  * queries
